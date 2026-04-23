@@ -11,6 +11,7 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
+    "@cloudflare/workers-types": "^4.20260423.1",
     "@google/genai": "^1.29.0",
     "@tailwindcss/vite": "^4.1.14",
     "@vitejs/plugin-react": "^5.0.4",
@@ -18,6 +19,7 @@
     "express": "^4.21.2",
     "firebase": "^12.12.0",
     "framer-motion": "^12.38.0",
+    "hono": "^4.12.14",
     "lucide-react": "^0.546.0",
     "motion": "^12.23.24",
     "react": "^19.0.0",

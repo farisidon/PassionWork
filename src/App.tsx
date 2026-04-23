@@ -144,22 +144,13 @@ const Chatbot = () => {
     setIsTyping(true);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: userMsg,
-        config: {
-          systemInstruction: `You are the ${BRAND_CONFIG.name} Career Advisor. 
-          CRITICAL: Reply in maximum 2 very short sentences. Be straight, brief, and professional.
-          Your goal: Help users find jobs, explain platform features, and provide career advice.
-          Platform Features:
-          - Featured Posts ($99): 30 days top placement.
-          - Pro Subscription ($19/mo): Early access & alerts.
-          Passions: Programming, Design, Marketing, Copywriting, Support, Finance, Business.`
-        }
+      const response = await fetch('/api/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: userMsg })
       });
-      
-      setMsgs(prev => [...prev, { role: 'bot', text: response.text || "I couldn't process that. Try again?" }]);
+      const data = await response.json();
+      setMsgs(prev => [...prev, { role: 'bot', text: data.text || "I couldn't process that. Try again?" }]);
     } catch (error) {
       console.error("Chatbot Error:", error);
       setMsgs(prev => [...prev, { role: 'bot', text: "Connection error. Try again?" }]);
@@ -1861,23 +1852,13 @@ export default function App() {
     setIsGeneratingStrategy(true);
     setStrategy(null);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-      const prompt = `Provide a 3-point killer application strategy for this remote job:
-Job: ${job.jobTitle} at ${job.companyName}
-Category: ${job.jobIndustry}
-Description Summary: ${job.jobExcerpt}
-
-Requirements: 
-- 3 short, high-impact bullet points.
-- Professional, aggressive, and creative.
-- Focus on how to stand out for a remote-first company.
-- Format as Markdown.`;
-
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: prompt
+      const response = await fetch('/api/ai/strategy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt })
       });
-      setStrategy(response.text || "Failed to generate strategy. Please try again.");
+      const data = await response.json();
+      setStrategy(data.text || "Failed to generate strategy. Please try again.");
     } catch (error) {
       console.error("Strategy Error:", error);
       setStrategy("Error connecting to AI. Please try again later.");
@@ -1930,27 +1911,14 @@ Requirements:
     setIsCalculatingMatch(true);
     setMatchResult(null);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-      const prompt = `Act as an expert technical recruiter. Compare the candidate's experience with this job description.
-      
-JOB: ${job.jobTitle} at ${job.companyName}
-JD: ${job.jobExcerpt}
-
-CANDIDATE EXPERIENCE:
-${userBio}
-
-Respond with a JSON object strictly in this format:
-{
-  "score": percentage_integer_between_0_100,
-  "gap": "A short markdown list of 3-4 specific missing skills or experiences"
-}`;
-
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: prompt
+      const response = await fetch('/api/ai/strategy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt })
       });
+      const data = await response.json();
       
-      const cleanJson = response.text?.replace(/```json|```/g, '').trim();
+      const cleanJson = data.text?.replace(/```json|```/g, '').trim();
       if (cleanJson) {
         const result = JSON.parse(cleanJson);
         setMatchResult(result);
@@ -1966,29 +1934,15 @@ Respond with a JSON object strictly in this format:
     if (isGeneratingPulse || !jobs.length) return;
     setIsGeneratingPulse(true);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-      const prompt = `Act as a high-energy personal remote career coach. Generate a daily briefing for the candidate.
-      
-      USER_BIO: ${userBio || "Passionate remote job seeker exploring various roles."}
-      MARKET_STATUS: ${jobs.length} new remote roles found today across ${[...new Set(jobs.map(j => j.jobIndustry))].slice(0, 5).join(', ')}.
-      
-      Output JSON format:
-      {
-        "greeting": "A short, high-energy headline (max 5 words) like 'The Market is Moving, [Name]!'",
-        "recommendation": "A 2-sentence tactical recommendation for today based on the bio and market.",
-        "topJobIndices": [Array of 3 indices from the provided job list that match best]
-      }
-      
-      JOBS LIST (First 15 for selection):
-      ${jobs.slice(0, 15).map((j, i) => `[${i}] ${j.jobTitle} at ${j.companyName} (${j.jobIndustry})`).join('\n')}`;
-
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: prompt
+      const response = await fetch('/api/ai/pulse', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt })
       });
+      const data = await response.json();
       
       // Clean up potential markdown code blocks from AI response
-      let cleanText = response.text || "{}";
+      let cleanText = data.text || "{}";
       if (cleanText.includes('```json')) cleanText = cleanText.split('```json')[1].split('```')[0].trim();
       else if (cleanText.includes('```')) cleanText = cleanText.split('```')[1].split('```')[0].trim();
       

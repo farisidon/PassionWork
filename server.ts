@@ -3,6 +3,7 @@ import { createServer as createViteServer } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
 import Stripe from "stripe";
+import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -28,6 +29,50 @@ const app = express();
 app.use(express.json());
 
 // API Routes
+app.post("/api/ai/chat", async (req, res) => {
+  try {
+    const { message } = req.body;
+    const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+    const response = await (genAI as any).models.generateContent({
+      model: "gemini-3-flash-preview",
+      systemInstruction: `You are the PassionWork Career Advisor. 
+      CRITICAL: Reply in maximum 2 very short sentences. Be straight, brief, and professional.`,
+      contents: message
+    });
+    res.json({ text: response.text });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post("/api/ai/strategy", async (req, res) => {
+  try {
+    const { prompt } = req.body;
+    const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+    const response = await (genAI as any).models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: prompt
+    });
+    res.json({ text: response.text });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post("/api/ai/pulse", async (req, res) => {
+  try {
+    const { prompt } = req.body;
+    const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+    const response = await (genAI as any).models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: prompt
+    });
+    res.json({ text: response.text });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.post("/api/create-checkout-session", async (req, res) => {
   try {
     const stripeInstance = getStripe();
