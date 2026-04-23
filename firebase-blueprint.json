@@ -1,0 +1,170 @@
+{
+  "entities": {
+    "Alert": {
+      "title": "Job Alert",
+      "description": "User subscription for job alerts based on specific filters",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "The email address to receive alerts"
+        },
+        "keywords": {
+          "type": "string",
+          "description": "Search keywords for the alert"
+        },
+        "category": {
+          "type": "string",
+          "description": "Job category or passion for the alert"
+        },
+        "region": {
+          "type": "string",
+          "description": "Geographic region for the alert"
+        },
+        "jobTypes": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Selected job types (full-time, contract, etc.)"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the alert was created"
+        },
+        "lastChecked": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the alert was last processed"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Firebase Auth User ID (optional if anonymous)"
+        }
+      },
+      "required": ["email", "createdAt"]
+    },
+    "SavedJob": {
+      "title": "Saved Job",
+      "description": "A job listing saved by the user for later reference",
+      "type": "object",
+      "properties": {
+        "jobId": { "type": "string" },
+        "userId": { "type": "string" },
+        "jobTitle": { "type": "string" },
+        "companyName": { "type": "string" },
+        "companyLogo": { "type": "string" },
+        "url": { "type": "string" },
+        "savedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["jobId", "userId", "savedAt"]
+    },
+    "JobPosting": {
+      "title": "Job Posting",
+      "description": "A job listing posted by an employer",
+      "type": "object",
+      "properties": {
+        "jobTitle": { "type": "string" },
+        "companyName": { "type": "string" },
+        "companyLogo": { "type": "string" },
+        "jobDescription": { "type": "string" },
+        "jobGeo": { "type": "string" },
+        "jobType": { "type": "string" },
+        "jobCategory": { "type": "string" },
+        "salaryMin": { "type": "number" },
+        "salaryMax": { "type": "number" },
+        "salaryCurrency": { "type": "string" },
+        "salaryPeriod": { "type": "string" },
+        "url": { "type": "string" },
+        "employerId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "isFeatured": { "type": "boolean" }
+      },
+      "required": ["jobTitle", "companyName", "jobDescription", "jobGeo", "jobType", "jobCategory", "url", "employerId", "createdAt", "isFeatured"]
+    },
+    "JobAnalytics": {
+      "title": "Job Analytics",
+      "description": "Performance metrics for a specific job listing",
+      "type": "object",
+      "properties": {
+        "jobId": { "type": "string" },
+        "views": { "type": "number", "description": "Number of times the job modal was opened" },
+        "clicks": { "type": "number", "description": "Number of times the Apply Now button was clicked" },
+        "lastUpdated": { "type": "string", "format": "date-time" }
+      },
+      "required": ["jobId", "views", "clicks", "lastUpdated"]
+    },
+    "VibeCheck": {
+      "title": "Company Vibe-Check",
+      "description": "Crowdsourced remote culture ratings for a company",
+      "type": "object",
+      "properties": {
+        "companyName": { "type": "string" },
+        "asyncScore": { "type": "number", "minimum": 1, "maximum": 5 },
+        "meetingScore": { "type": "number", "minimum": 1, "maximum": 5 },
+        "borderlessScore": { "type": "number", "minimum": 1, "maximum": 5 },
+        "userId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["companyName", "asyncScore", "meetingScore", "borderlessScore", "userId", "createdAt"]
+    },
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "User account information and membership status",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "isPro": { "type": "boolean" },
+        "proExpiresAt": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email"]
+    },
+    "SupportTicket": {
+      "title": "Support Ticket",
+      "description": "User inquiry or support request",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "subject": { "type": "string" },
+        "message": { "type": "string" },
+        "userId": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "resolved"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "email", "subject", "message", "status", "createdAt"]
+    }
+  },
+  "firestore": {
+    "alerts/{alertId}": {
+      "schema": "Alert",
+      "description": "Collection of all user job alerts"
+    },
+    "saved_jobs/{saveId}": {
+      "schema": "SavedJob",
+      "description": "User specific saved job listings"
+    },
+    "postings/{postingId}": {
+      "schema": "JobPosting",
+      "description": "Direct employer job postings"
+    },
+    "analytics/{jobId}": {
+      "schema": "JobAnalytics",
+      "description": "Real-time performance metrics per job ID"
+    },
+    "vibe_checks/{vibeId}": {
+      "schema": "VibeCheck",
+      "description": "User-submitted company culture ratings"
+    },
+    "users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User account and profile data"
+    },
+    "support_tickets/{ticketId}": {
+      "schema": "SupportTicket",
+      "description": "Collection of support inquiries"
+    }
+  }
+}

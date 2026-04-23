@@ -1,0 +1,143 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Reuseable helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.size() <= 256 && email.matches('^[^@]+@[^@]+\\.[^@]+$');
+    }
+
+    function isValidAlert(data) {
+      return data.keys().hasAll(['email', 'createdAt', 'lastChecked']) &&
+             data.keys().size() <= 9 &&
+             isValidEmail(data.email) &&
+             data.createdAt == request.time &&
+             data.lastChecked == request.time &&
+             ( !('keywords' in data) || (data.keywords is string && data.keywords.size() <= 100) ) &&
+             ( !('category' in data) || (data.category is string && data.category.size() <= 50) ) &&
+             ( !('region' in data) || (data.region is string && data.region.size() <= 50) ) &&
+             ( !('jobTypes' in data) || (data.jobTypes is list && data.jobTypes.size() <= 10 && (data.jobTypes.size() == 0 || data.jobTypes[0] is string)) ) &&
+             ( !('userId' in data) || (data.userId == request.auth.uid) );
+    }
+
+    function isValidSavedJob(data) {
+      return data.keys().hasAll(['jobId', 'userId', 'savedAt', 'jobTitle', 'companyName', 'url']) &&
+             data.keys().size() <= 7 &&
+             data.userId == request.auth.uid &&
+             data.savedAt == request.time &&
+             data.jobId is string &&
+             data.jobTitle is string &&
+             data.companyName is string;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'farisidon@gmail.com' && request.auth.token.email_verified == true
+      );
+    }
+
+    function isValidPosting(data) {
+      return data.keys().hasAll(['jobTitle', 'companyName', 'jobDescription', 'jobGeo', 'jobType', 'jobCategory', 'url', 'employerId', 'createdAt', 'isFeatured', 'isApproved']) &&
+             data.keys().size() <= 12 && 
+             data.jobTitle is string && data.jobTitle.size() <= 200 &&
+             data.companyName is string && data.companyName.size() <= 200 &&
+             data.jobDescription is string && data.jobDescription.size() <= 20000 &&
+             data.url is string && data.url.size() <= 1024 &&
+             data.employerId == request.auth.uid &&
+             data.createdAt == request.time &&
+             data.isFeatured == true &&
+             (data.isApproved == true || data.isApproved == false); 
+    }
+
+    function isValidVibeCheck(data) {
+      return data.keys().hasAll(['companyName', 'asyncScore', 'meetingScore', 'borderlessScore', 'userId', 'createdAt']) &&
+             data.keys().size() == 6 &&
+             data.companyName is string &&
+             data.asyncScore is number && data.asyncScore >= 1 && data.asyncScore <= 5 &&
+             data.meetingScore is number && data.meetingScore >= 1 && data.meetingScore <= 5 &&
+             data.borderlessScore is number && data.borderlessScore >= 1 && data.borderlessScore <= 5 &&
+             data.userId == request.auth.uid &&
+             data.createdAt == request.time;
+    }
+
+    function isValidUser(data, userId) {
+      return data.keys().hasAll(['uid', 'email']) &&
+             data.uid == userId &&
+             data.uid == request.auth.uid &&
+             isValidEmail(data.email) &&
+             ( !('isPro' in data) || data.isPro is bool ) &&
+             ( !('proExpiresAt' in data) || data.proExpiresAt is timestamp ) &&
+             ( !('createdAt' in data) || data.createdAt is timestamp || data.createdAt is string );
+    }
+
+    function isValidSupportTicket(data) {
+      return data.keys().hasAll(['name', 'email', 'subject', 'message', 'status', 'createdAt']) &&
+             data.keys().size() <= 7 &&
+             data.name is string && data.name.size() <= 100 &&
+             isValidEmail(data.email) &&
+             data.subject is string && data.subject.size() <= 200 &&
+             data.message is string && data.message.size() <= 5000 &&
+             data.status in ['pending', 'resolved'] &&
+             data.createdAt == request.time &&
+             ( !('userId' in data) || (data.userId == request.auth.uid) );
+    }
+
+    match /alerts/{alertId} {
+      allow create: if isValidAlert(request.resource.data);
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid);
+      allow get, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow update: if isAdmin();
+    }
+
+    match /saved_jobs/{saveId} {
+      allow create: if isValidSavedJob(request.resource.data);
+      allow read, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow update: if isAdmin();
+    }
+
+    match /postings/{postingId} {
+      allow create: if isSignedIn() && isValidPosting(request.resource.data);
+      allow read: if true;
+      allow list: if (resource.data.isApproved == true) || isAdmin();
+      allow update: if isAdmin() || (isSignedIn() && resource.data.employerId == request.auth.uid);
+      allow delete: if isAdmin() || (isSignedIn() && resource.data.employerId == request.auth.uid);
+    }
+
+    match /vibe_checks/{vibeId} {
+      allow create, update: if isSignedIn() && isValidVibeCheck(request.resource.data);
+      allow read: if true;
+    }
+
+    match /analytics/{jobId} {
+      allow get: if true;
+      allow create, update: if true; // Public can increment analytics via platform-restricted increment()
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId) || isAdmin();
+      allow create, update: if isOwner(userId) && isValidUser(request.resource.data, userId);
+    }
+
+    match /support_tickets/{ticketId} {
+      allow create: if isValidSupportTicket(request.resource.data);
+      allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+    }
+  }
+}
