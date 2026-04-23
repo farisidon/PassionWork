@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Linkedin,
+  Facebook,
   Github,
   Search, 
   Briefcase, 
@@ -101,16 +102,6 @@ interface Job {
   isFeatured?: boolean;
 }
 
-const XIcon = ({ size = 18 }: { size?: number }) => (
-  <svg 
-    width={size} 
-    height={size} 
-    viewBox="0 0 24 24" 
-    fill="currentColor"
-  >
-    <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932L18.901 1.153zM17.61 20.644h2.039L6.486 3.24H4.298L17.61 20.644z" />
-  </svg>
-);
 
 // --- BRANDING & CONFIG ---
 const BRAND_CONFIG = {
@@ -119,9 +110,9 @@ const BRAND_CONFIG = {
   description: "The premier platform for high-vibe remote specialists.",
   supportEmail: "hello@passionwork.io",
   socials: {
-    x: "https://x.com/passionwork",
-    linkedin: "https://linkedin.com/company/passionwork",
-    github: "https://github.com/passionwork"
+    linkedin: "https://www.linkedin.com/company/passionwork/",
+    facebook: "https://web.facebook.com/profile.php?id=61566100725535",
+    github: "https://github.com/farisidon/PassionWork"
   }
 };
 
@@ -767,6 +758,7 @@ interface NavbarProps {
   setIsDarkMode: (dark: boolean) => void;
   searchTerm: string;
   setSearchTerm: (term: string) => void;
+  setDebouncedSearchTerm: (term: string) => void;
   isCopying: boolean;
   handleCopyLink: () => void;
   savedJobIdsCount: number;
@@ -787,6 +779,7 @@ const Navbar = ({
   setIsDarkMode,
   searchTerm,
   setSearchTerm,
+  setDebouncedSearchTerm,
   isCopying,
   handleCopyLink,
   savedJobIdsCount,
@@ -854,6 +847,31 @@ const Navbar = ({
           className="w-full pl-11 pr-4 py-3 bg-bg/50 border border-border/60 rounded-2xl text-xs focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all text-text font-medium placeholder:text-text-muted/50"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              setCurrentView('dashboard');
+              setDebouncedSearchTerm(searchTerm);
+            }
+          }}
+        />
+      </div>
+    )}
+
+    {currentView === 'landing' && (
+      <div className="hidden lg:block relative w-64 xl:w-80 group">
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted/40 group-focus-within:text-primary transition-colors" size={14} />
+        <input 
+          type="text" 
+          placeholder="Quick search..." 
+          className="w-full pl-10 pr-4 py-2.5 bg-bg/40 border border-border/60 rounded-xl text-xs focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all text-text font-medium placeholder:text-text-muted/40"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              setCurrentView('dashboard');
+              setDebouncedSearchTerm(searchTerm);
+            }
+          }}
         />
       </div>
     )}
@@ -2211,7 +2229,11 @@ Respond with a JSON object strictly in this format:
   };
 
   const LandingPage = () => {
-    const featuredJobs = jobs.slice(0, 6);
+    const featuredJobs = useMemo(() => {
+      const realFeatured = jobs.filter(j => j.isFeatured);
+      const others = jobs.filter(j => !j.isFeatured);
+      return [...realFeatured, ...others].slice(0, 6);
+    }, [jobs]);
     
     return (
       <div className="flex flex-col min-h-screen bg-bg selection:bg-primary/10 overflow-x-hidden">
@@ -3670,8 +3692,8 @@ Respond with a JSON object strictly in this format:
             </p>
             <div className="flex gap-4">
                {[
-                 { icon: <XIcon size={18} />, url: BRAND_CONFIG.socials.x },
                  { icon: <Linkedin size={18} />, url: BRAND_CONFIG.socials.linkedin },
+                 { icon: <Facebook size={18} />, url: BRAND_CONFIG.socials.facebook },
                  { icon: <Github size={18} />, url: BRAND_CONFIG.socials.github }
                ].map((s, i) => (
                  <a key={i} href={s.url} target="_blank" rel="noreferrer" className="w-10 h-10 rounded-full bg-bg border border-border flex items-center justify-center text-text-muted hover:text-primary transition-all shadow-sm">
@@ -4048,6 +4070,7 @@ Respond with a JSON object strictly in this format:
         setIsDarkMode={setIsDarkMode}
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
+        setDebouncedSearchTerm={setDebouncedSearchTerm}
         isCopying={isCopying}
         handleCopyLink={handleCopyLink}
         savedJobIdsCount={savedJobIds.size}

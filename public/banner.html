@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PassionWork - LinkedIn Banner</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f1f5f9;
+        }
+        /* Exact LinkedIn dimensions */
+        .banner {
+            width: 1128px;
+            height: 191px;
+            background: linear-gradient(135deg, #2563EB 0%, #1E40AF 100%);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end; /* Align content to the right side */
+            padding: 0 100px; /* Safe space from the right */
+            color: white;
+            font-family: 'Inter', -apple-system, sans-serif;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        /* Pattern Overlay */
+        .banner::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: 
+                radial-gradient(circle at 2px 2px, rgba(255,255,255,0.1) 1px, transparent 0);
+            background-size: 24px 24px;
+            opacity: 0.5;
+        }
+        .content {
+            position: relative;
+            z-index: 10;
+            text-align: right; /* Text aligned to the right */
+        }
+        h1 {
+            font-size: 48px;
+            font-weight: 900;
+            margin: 0;
+            letter-spacing: -0.04em;
+            text-transform: lowercase;
+        }
+        span.dot {
+            color: #60A5FA;
+        }
+        p {
+            font-size: 18px;
+            font-weight: 500;
+            margin: 4px 0 0 0;
+            opacity: 0.9;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+        /* Accent graphic */
+        .swish {
+            position: absolute;
+            right: -50px;
+            bottom: -50px;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+    <div class="banner" id="banner-el">
+        <div class="swish"></div>
+        <div class="content">
+            <h1>passionWork<span class="dot">.</span></h1>
+            <p>The curated remote work economy</p>
+        </div>
+    </div>
+
+    <div style="margin-top: 40px; text-align: center;">
+        <button id="download-btn" style="padding: 12px 24px; background: #2563EB; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: sans-serif;">
+            Download as High-Res PNG
+        </button>
+        <p style="font-size: 12px; color: #64748b; margin-top: 10px;">This will generate a perfect 1128x191 PNG for LinkedIn.</p>
+    </div>
+
+    <canvas id="render-canvas" width="1128" height="191" style="display: none;"></canvas>
+
+    <script>
+        async function renderBanner() {
+            const canvas = document.getElementById('render-canvas');
+            const ctx = canvas.getContext('2d');
+            const btn = document.getElementById('download-btn');
+
+            // Wait for fonts to be ready
+            btn.innerText = "Loading Fonts...";
+            await document.fonts.ready;
+            btn.innerText = "Generating PNG...";
+
+            // 1. Draw Gradient Background
+            const grd = ctx.createLinearGradient(0, 0, 1128, 191);
+            grd.addColorStop(0, "#2563EB");
+            grd.addColorStop(1, "#1D4ED8");
+            ctx.fillStyle = grd;
+            ctx.fillRect(0, 0, 1128, 191);
+
+            // 2. Draw Pattern (Dots)
+            ctx.fillStyle = "rgba(255, 255, 255, 0.08)";
+            for (let x = 12; x < 1128; x += 24) {
+                for (let y = 12; y < 191; y += 24) {
+                    ctx.beginPath();
+                    ctx.arc(x, y, 1.2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            // 3. Draw Branding (Right Aligned)
+            ctx.textAlign = "right";
+            ctx.textBaseline = "middle";
+            
+            // Draw Main Title
+            ctx.fillStyle = "white";
+            ctx.font = "900 52px 'Inter', sans-serif";
+            const title = "passionWork";
+            ctx.fillText(title, 1028, 80);
+            
+            // Draw Blue Dot at the correct position
+            const metrics = ctx.measureText(title);
+            ctx.fillStyle = "#60A5FA";
+            ctx.beginPath();
+            ctx.arc(1028 + 4, 92, 5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Draw Slogan
+            ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
+            ctx.font = "600 18px 'Inter', sans-serif";
+            ctx.letterSpacing = "2px";
+            ctx.fillText("THE CURATED REMOTE WORK ECONOMY", 1028, 125);
+
+            // 4. Trigger Download
+            setTimeout(() => {
+                const link = document.createElement('a');
+                link.download = 'passionwork_linkedin_banner.png';
+                link.href = canvas.toDataURL('image/png', 1.0);
+                link.click();
+                btn.innerText = "Download as High-Res PNG";
+            }, 500);
+        }
+
+        document.getElementById('download-btn').addEventListener('click', renderBanner);
+    </script>
+</body>
+</html>
